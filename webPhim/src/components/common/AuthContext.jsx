@@ -14,48 +14,100 @@ export const AuthProvider = ({ children }) => {
   });
   const [role, setRole] = useState(() => localStorage.getItem('role') || 'user');
 
-  // Hàm đăng nhập giả lập
+  // Hàm đăng nhập
   const login = useCallback(async (inputEmail, inputPassword) => {
-    setEmail(inputEmail);
-    setIsAuthenticated(true);
-    localStorage.setItem('email', inputEmail);
-    localStorage.setItem('isAuthenticated', 'true');
-    // Lấy userInfo từ localStorage
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const user = users.find(u => u.email === inputEmail && u.password === inputPassword);
-    if (user) {
-      setUserInfo(user);
-      setRole(user.role || 'user');
-      localStorage.setItem('userInfo', JSON.stringify(user));
-      localStorage.setItem('role', user.role || 'user');
-      return true;
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: inputEmail, password: inputPassword }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEmail(data.user.email);
+        setIsAuthenticated(true);
+        setUserInfo(data.user);
+        setRole(data.user.role || 'user');
+        
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        localStorage.setItem('email', data.user.email);
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userInfo', JSON.stringify(data.user));
+        localStorage.setItem('role', data.user.role || 'user');
+        return true;
+      } else {
+        alert(data.message || 'Đăng nhập thất bại');
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Lỗi kết nối server');
+      return false;
     }
-    return false;
   }, []);
 
   // Hàm đăng ký
-  const register = useCallback((inputEmail, inputPassword, inputRole = 'user') => {
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    if (users.find(u => u.email === inputEmail)) {
-      return false; // Email đã tồn tại
+  const register = useCallback(async (inputUsername, inputEmail, inputPassword) => {
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          username: inputUsername, 
+          email: inputEmail, 
+          password: inputPassword 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Đăng ký thành công! Vui lòng đăng nhập.');
+        return true;
+      } else {
+        alert(data.message || 'Đăng ký thất bại');
+        return false;
+      }
+    } catch (error) {
+      console.error('Register error:', error);
+      alert('Lỗi kết nối server');
+      return false;
     }
-    const newUser = { email: inputEmail, password: inputPassword, role: inputRole };
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    return true;
   }, []);
 
   // Hàm đăng xuất
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      const userId = userInfo?.id || userInfo?._id;
+      if (userId) {
+        await fetch('http://localhost:3000/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
     setEmail('');
     setIsAuthenticated(false);
     setUserInfo(null);
     setRole('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('email');
     localStorage.setItem('isAuthenticated', 'false');
     localStorage.removeItem('userInfo');
     localStorage.removeItem('role');
-  }, []);
+  }, [userInfo]);
 
   // Hàm setRole cho phép cập nhật role từ bên ngoài
   const setRoleExternal = useCallback((newRole) => {

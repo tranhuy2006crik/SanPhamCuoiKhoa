@@ -3,7 +3,7 @@ import { AuthContext } from '../common/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const LoginRegister = () => {
-  const { email, login, setEmail, setUserInfo } = useContext(AuthContext);
+  const { email, login, register, setEmail, setUserInfo } = useContext(AuthContext);
   const [tab, setTab] = useState('login'); // 'login' hoặc 'register'
   const [registerEmail, setRegisterEmail] = useState(email || '');
   const [password, setPassword] = useState('');
@@ -49,44 +49,27 @@ const LoginRegister = () => {
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     if (tab === 'register') {
       if (!fullName) {
-        setMessage('Vui lòng nhập Họ và Tên!');
+        setMessage({ text: 'Vui lòng nhập Họ và Tên!', type: 'error' });
         return;
       }
-      if (!dob) {
-        setMessage('Vui lòng chọn Ngày sinh!');
-        return;
+      const success = await register(fullName, registerEmail, password);
+      if (success) {
+        setMessage({ text: 'Đăng ký thành công! Vui lòng đăng nhập.', type: 'success' });
+        setTab('login');
+        setPassword('');
+        setFullName('');
+        setDob('');
       }
-      // Kiểm tra email đã tồn tại chưa
-      const existed = users.find(u => u.email === registerEmail);
-      if (existed) {
-        setMessage({ text: 'Email đã được đăng ký!', type: 'error' });
-        return;
-      }
-      // Lưu user mới vào localStorage
-      users.push({ email: registerEmail, password, fullName, dob, isMember: false });
-      localStorage.setItem('users', JSON.stringify(users));
-      setMessage({ text: 'Đăng ký thành công! Vui lòng đăng nhập.', type: 'success' });
-      setTab('login');
-      setPassword('');
-      setFullName('');
-      setDob('');
       return;
     } else {
-      // Đăng nhập: kiểm tra email và password
-      const user = users.find(u => u.email === registerEmail && u.password === password);
-      if (!user) {
-        setMessage({ text: 'Email hoặc mật khẩu không đúng!', type: 'error' });
-        return;
+      // Đăng nhập: kiểm tra email và password qua Backend
+      const success = await login(registerEmail, password);
+      if (success) {
+        setMessage({ text: 'Đăng nhập thành công!', type: 'success' });
+        setSuccess(true);
       }
-      setEmail(registerEmail); // cập nhật email context khi đăng nhập
-      await login(registerEmail);
-      // Lưu userInfo vào localStorage để các component khác có thể truy cập
-      localStorage.setItem('userInfo', JSON.stringify(user));
-      setUserInfo(user); // cập nhật context ngay lập tức
-      setMessage({ text: 'Đăng nhập thành công!', type: 'success' });
-      setSuccess(true);
     }
-  }, [registerEmail, password, tab, login, fullName, dob, setEmail, setUserInfo]);
+  }, [registerEmail, password, tab, login, register, fullName, dob, setEmail, setUserInfo]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black">

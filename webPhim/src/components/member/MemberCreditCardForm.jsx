@@ -14,7 +14,7 @@ const MemberCreditCardForm = () => {
   const [errors, setErrors] = useState({});
   const [plan, setPlan] = useState({ name: 'Tiêu chuẩn', price: '231.000 đ/tháng' });
   const navigate = useNavigate();
-  const { logout } = useContext(AuthContext);
+  const { logout, userInfo, setUserInfo } = useContext(AuthContext);
 
   useEffect(() => {
     const stored = localStorage.getItem('selectedPlan');
@@ -48,27 +48,36 @@ const MemberCreditCardForm = () => {
     return errs;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     setErrors(errs);
     if (Object.keys(errs).length === 0 && agree) {
-      // Gửi request lên admin
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const requests = JSON.parse(localStorage.getItem('member_requests') || '[]');
-      // Kiểm tra đã có request chưa
-      const existed = requests.find(r => r.email === userInfo.email && r.status === 'pending');
-      if (!existed) {
-        requests.push({
-          email: userInfo.email,
-          name: userInfo.fullName || userInfo.username || userInfo.email,
-          plan: plan.name,
-          status: 'pending'
+      try {
+        const response = await fetch('http://localhost:3000/api/member-requests', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userInfo.id || userInfo._id,
+            email: userInfo.email,
+            name: name,
+            plan: plan.name
+          }),
         });
-        localStorage.setItem('member_requests', JSON.stringify(requests));
-        alert('Yêu cầu đăng ký hội viên của bạn đã được gửi. Vui lòng chờ admin duyệt!');
-      } else {
-        alert('Bạn đã gửi yêu cầu đăng ký hội viên và đang chờ duyệt!');
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Yêu cầu đăng ký hội viên của bạn đã được gửi. Vui lòng chờ admin duyệt!');
+          navigate('/');
+        } else {
+          alert(data.message || 'Gửi yêu cầu thất bại');
+        }
+      } catch (error) {
+        console.error('Submit request error:', error);
+        alert('Lỗi kết nối server');
       }
     }
   };

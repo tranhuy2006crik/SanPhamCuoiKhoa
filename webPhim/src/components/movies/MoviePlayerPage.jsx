@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import db from '../../ultis/db.json';
 
 function getYoutubeEmbedUrl(url) {
   if (!url) return '';
@@ -17,9 +16,31 @@ function getYoutubeEmbedUrl(url) {
 export default function MoviePlayerPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const movie = db.movies.find(m => m.id === id);
+  const [movie, setMovie] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!movie) return (
+  useEffect(() => {
+    const fetchMovie = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/movies/${id}`);
+        const data = await response.json();
+        setMovie(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching movie:', error);
+        setLoading(false);
+      }
+    };
+    fetchMovie();
+  }, [id]);
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+    </div>
+  );
+
+  if (!movie || movie.message) return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white">
       <div>
         <h2 className="text-2xl font-bold mb-4">Không tìm thấy phim!</h2>

@@ -1,51 +1,24 @@
-import React, { useRef } from 'react';
-
-// Dữ liệu mẫu 10 phim hot nhất
-const movies = [
-  {
-    title: 'Squid Game',
-    image: 'https://daknong.1cdn.vn/2025/06/23/gioi-thieu-phim-squid-game-mua-3.jpg',
-  },
-  {
-    title: 'Mercy for None',
-    image: 'https://upload.wikimedia.org/wikipedia/en/3/31/Mercy_for_None_poster.png',
-  },
-  {
-    title: 'KPOP DEMON HUNTERS',
-    image: 'https://i.scdn.co/image/ab67616d0000b2734dcb6c5df15cf74596ab25a4',
-  },
-  {
-    title: 'The Old Guard 2',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUFXZx9DOfawxQcow1lB5voZxX50Ae-1jOIw&s',
-  },
-  {
-    title: 'When Life Gives You Tangerines',
-    image: 'https://resizing.flixster.com/KnOT2EMVKPMEcx5J0LONufUM36k=/fit-in/705x460/v2/https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p29596685_b_h9_aa.jpg',
-  },
-  {
-    title: 'Mai',
-    image: 'https://baoapbac.vn/dataimages/202402/original/images1932115_422890436_981103440046592_2953485654680463176_n_860__1_.jpg',
-  },
-  {
-    title: 'Ziam',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRStJ3ZayX8Tr-1ru6n6Akpwt6T6hC07WKXTw&s',
-  },
-  {
-    title: 'Hoa thơm kiêu hãnh',
-    image: 'https://p16-sg.tiktokcdn.com/obj/tos-alisg-avt-0068/7d920378114431a66ad7dd3846cf9991',
-  },
-  {
-    title: 'Trung tâm chăm sóc chấn thương',
-    image: 'https://bazaarvietnam.vn/wp-content/uploads/2025/01/harper-bazaar-review-trung-tam-cham-soc-chan-thuong-the-trauma-code-heroes-on-call-4-e1737891377812.jpg',
-  },
-  {
-    title: 'Một Seoul chưa biết đến',
-    image: 'https://bazaarvietnam.vn/wp-content/uploads/2025/05/harper-bazaar-review-phim-mot-seoul-chua-biet-den-our-unwritten-seoul-1-e1748171333829.jpeg',
-  },
-];
+import React, { useRef, useState, useEffect } from 'react';
 
 const ListMovie = () => {
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/movies?limit=10');
+        const data = await response.json();
+        setMovies(data.movies || []); // Cập nhật lấy từ data.movies
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching movies:', error);
+        setLoading(false);
+      }
+    };
+    fetchMovies();
+  }, []);
 
   const scroll = (direction) => {
     const { current } = scrollRef;
