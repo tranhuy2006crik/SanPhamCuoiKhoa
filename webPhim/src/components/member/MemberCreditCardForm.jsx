@@ -14,7 +14,38 @@ const MemberCreditCardForm = () => {
   const [errors, setErrors] = useState({});
   const [plan, setPlan] = useState({ name: 'Tiêu chuẩn', price: '231.000 đ/tháng' });
   const navigate = useNavigate();
-  const { logout, userInfo, setUserInfo } = useContext(AuthContext);
+  const { logout, userInfo, setUserInfo, checkStatus } = useContext(AuthContext);
+  const [waiting, setWaiting] = useState(false);
+
+  useEffect(() => {
+    let interval;
+    if (waiting) {
+      console.log('Starting polling for member status...');
+      interval = setInterval(async () => {
+        console.log('Polling checkStatus...');
+        const isMember = await checkStatus();
+        console.log('IsMember status:', isMember);
+
+        // Kiểm tra cả flag từ localStorage nếu polling gặp vấn đề cache
+        const approvedEmail = localStorage.getItem('member_approved_success');
+        const userEmail = localStorage.getItem('email');
+
+        if (isMember === true || (approvedEmail && approvedEmail === userEmail)) {
+          console.log('Success! Navigating...');
+          clearInterval(interval);
+          localStorage.removeItem('member_approved_success');
+          alert('Chúc mừng! Admin đã duyệt yêu cầu. Bạn đã trở thành hội viên GHT!');
+          navigate('/movies');
+        }
+      }, 3000);
+    }
+    return () => {
+      if (interval) {
+        console.log('Cleaning up polling interval');
+        clearInterval(interval);
+      }
+    };
+  }, [waiting, checkStatus, navigate]);
 
   useEffect(() => {
     const stored = localStorage.getItem('selectedPlan');
@@ -70,8 +101,7 @@ const MemberCreditCardForm = () => {
         const data = await response.json();
 
         if (response.ok) {
-          alert('Yêu cầu đăng ký hội viên của bạn đã được gửi. Vui lòng chờ admin duyệt!');
-          navigate('/');
+          setWaiting(true);
         } else {
           alert(data.message || 'Gửi yêu cầu thất bại');
         }
@@ -81,6 +111,25 @@ const MemberCreditCardForm = () => {
       }
     }
   };
+
+  if (waiting) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+        <div className="bg-gray-50 p-10 rounded-2xl shadow-xl text-center max-w-md w-full border border-gray-100">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-600 mx-auto mb-6"></div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">Đang chờ duyệt...</h2>
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            Yêu cầu của bạn đã được gửi tới hệ thống. <br/>
+            Vui lòng <strong>không đóng trang này</strong>. <br/>
+            Hệ thống sẽ tự động chuyển hướng khi Admin chấp nhận yêu cầu của bạn.
+          </p>
+          <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm font-medium">
+            Mẹo: Admin có thể duyệt yêu cầu của bạn ngay lập tức!
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white px-2">
@@ -100,9 +149,8 @@ const MemberCreditCardForm = () => {
         <div className="text-xs text-gray-500 font-semibold mb-2 tracking-widest mt-8">BƯỚC 3/3</div>
         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gray-900">Thiết lập thẻ tín dụng hoặc thẻ ghi nợ</h1>
         <div className="flex gap-2 mb-4 justify-center">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" className="h-7 w-12 object-contain" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Mastercard-logo.png" alt="Mastercard" className="h-7 w-12 object-contain" />
-         
+          <img src="/images/visa.png" alt="Visa" className="h-7 w-12 object-contain" />
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="h-7 w-12 object-contain" />
         </div>
         <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
           <div>

@@ -48,7 +48,11 @@ export const approveRequest = async (req, res) => {
         // Cập nhật trạng thái isMember của User
         await User.findByIdAndUpdate(request.userId, { isMember: true });
 
-        res.status(200).json({ message: 'Đã duyệt yêu cầu hội viên' });
+        // Cập nhật email đã duyệt vào DB (tùy chọn) hoặc đơn giản là trả về email trong response
+        res.status(200).json({ 
+            message: 'Đã duyệt yêu cầu hội viên',
+            email: request.email // Trả về email để Frontend có thể sử dụng nếu cần
+        });
     } catch (error) {
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }

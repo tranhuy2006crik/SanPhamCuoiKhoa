@@ -11,7 +11,38 @@ const MomoSetup = () => {
   const [error, setError] = useState('');
   const [plan, setPlan] = useState({ name: 'Cao cấp', price: '273.000 đ/tháng' });
   const navigate = useNavigate();
-  const { logout } = useContext(AuthContext);
+  const { logout, userInfo, checkStatus } = useContext(AuthContext);
+  const [waiting, setWaiting] = useState(false);
+
+  useEffect(() => {
+    let interval;
+    if (waiting) {
+      console.log('Starting polling for member status (Momo)...');
+      interval = setInterval(async () => {
+        console.log('Polling checkStatus...');
+        const isMember = await checkStatus();
+        console.log('IsMember status:', isMember);
+        
+        // Kiểm tra cả flag từ localStorage nếu polling gặp vấn đề cache
+        const approvedEmail = localStorage.getItem('member_approved_success');
+        const userEmail = localStorage.getItem('email');
+
+        if (isMember === true || (approvedEmail && approvedEmail === userEmail)) {
+          console.log('Success! Navigating...');
+          clearInterval(interval);
+          localStorage.removeItem('member_approved_success');
+          alert('Chúc mừng! Admin đã duyệt yêu cầu. Bạn đã trở thành hội viên GHT!');
+          navigate('/movies');
+        }
+      }, 3000);
+    }
+    return () => {
+      if (interval) {
+        console.log('Cleaning up polling interval (Momo)');
+        clearInterval(interval);
+      }
+    };
+  }, [waiting, checkStatus, navigate]);
 
   useEffect(() => {
     const stored = localStorage.getItem('selectedPlan');
@@ -36,30 +67,57 @@ const MomoSetup = () => {
     setError(val ? validatePhone(val) : '');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const err = validatePhone(phone);
     setError(err);
     if (!err && agree) {
-      // Gửi request lên admin
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-      const requests = JSON.parse(localStorage.getItem('member_requests') || '[]');
-      // Kiểm tra đã có request chưa
-      const existed = requests.find(r => r.email === userInfo.email && r.status === 'pending');
-      if (!existed) {
-        requests.push({
-          email: userInfo.email,
-          name: userInfo.fullName || userInfo.username || userInfo.email,
-          plan: plan.name,
-          status: 'pending'
+      try {
+        const response = await fetch('http://localhost:3000/api/member-requests', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userInfo.id || userInfo._id,
+            email: userInfo.email,
+            name: userInfo.username || userInfo.email,
+            plan: plan.name
+          }),
         });
-        localStorage.setItem('member_requests', JSON.stringify(requests));
-        alert('Yêu cầu đăng ký hội viên của bạn đã được gửi. Vui lòng chờ admin duyệt!');
-      } else {
-        alert('Bạn đã gửi yêu cầu đăng ký hội viên và đang chờ duyệt!');
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setWaiting(true);
+        } else {
+          alert(data.message || 'Gửi yêu cầu thất bại');
+        }
+      } catch (error) {
+        console.error('Submit request error:', error);
+        alert('Lỗi kết nối server');
       }
     }
   };
+
+  if (waiting) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+        <div className="bg-gray-50 p-10 rounded-2xl shadow-xl text-center max-w-md w-full border border-gray-100">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-600 mx-auto mb-6"></div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">Đang chờ duyệt...</h2>
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            Yêu cầu của bạn đã được gửi tới hệ thống. <br/>
+            Vui lòng <strong>không đóng trang này</strong>. <br/>
+            Hệ thống sẽ tự động chuyển hướng khi Admin chấp nhận yêu cầu của bạn.
+          </p>
+          <div className="bg-pink-50 text-pink-600 p-4 rounded-lg text-sm font-medium">
+            MoMo: Hệ thống đang xác nhận thanh toán của bạn!
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white px-2">
@@ -78,7 +136,7 @@ const MomoSetup = () => {
       <div className="w-full max-w-md mx-auto">
         <div className="text-xs text-gray-500 font-semibold mb-2 tracking-widest mt-8">BƯỚC 3/3</div>
         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gray-900">Thiết lập MoMo</h1>
-        <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" className="h-8 w-8 mb-4" />
+        <img src="/images/momo.webp" alt="MoMo" className="h-8 w-8 mb-4" />
         <form onSubmit={handleSubmit} className="flex flex-col gap-0">
           <p className="text-gray-800 mb-4">Nhập số điện thoại di động MoMo của bạn.</p>
           <p className="text-gray-600 mb-4 text-sm">Chúng tôi cũng sẽ dùng số điện thoại của bạn nếu bạn quên mật khẩu, cũng như để gửi các tin nhắn quan trọng về tài khoản. Bạn có thể phải trả phí tin nhắn SMS.</p>

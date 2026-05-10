@@ -46,7 +46,7 @@ const MemberRegisterStep1 = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
                 <circle cx="12" cy="12" r="9" />
               </svg>
-              <span>Mọi thứ trên Netflix chỉ với mức giá thấp.</span>
+              <span>Mọi thứ trên GHT chỉ với mức giá thấp.</span>
             </li>
             <li className="flex items-start gap-2">
               <svg className="w-6 h-6 text-red-500 mt-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

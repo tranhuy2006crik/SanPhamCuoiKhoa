@@ -22,10 +22,10 @@ const AdminPage = () => {
   });
 
   useEffect(() => {
-    if (activeTab === 'requests') {
-      fetchRequests();
-    }
-  }, [activeTab]);
+    fetchRequests();
+    const interval = setInterval(fetchRequests, 5000); // Tự động cập nhật mỗi 5 giây
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchRequests = async () => {
     try {
@@ -34,6 +34,35 @@ const AdminPage = () => {
       setRequests(data);
     } catch (error) {
       console.error('Error fetching requests:', error);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/admin', { replace: true });
+  };
+
+  const handleSelect = (id) => {
+    setSelected(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleApprove = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/member-requests/${id}/approve`, {
+        method: 'PUT',
+      });
+
+      if (response.ok) {
+        setRequests(prev => prev.filter(r => (r._id || r.id) !== id));
+        setSelected(prev => prev.filter(i => i !== id));
+        alert('Đã duyệt hội viên thành công!');
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Duyệt thất bại');
+      }
+    } catch (error) {
+      console.error('Approve error:', error);
+      alert('Lỗi kết nối server');
     }
   };
 

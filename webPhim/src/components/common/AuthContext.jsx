@@ -122,6 +122,51 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('role', role);
   }, [email, isAuthenticated, role]);
 
+  // Hàm kiểm tra trạng thái hội viên (Polling)
+  const checkStatus = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('No token found in localStorage');
+        return null;
+      }
+
+      const response = await fetch('http://localhost:3000/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('API /me raw isMember:', data.isMember);
+
+        // Đọc userInfo mới nhất từ localStorage để tránh closure cũ
+        const currentInfoStr = localStorage.getItem('userInfo');
+        const currentInfo = currentInfoStr ? JSON.parse(currentInfoStr) : {};
+
+        // Luôn tạo đối tượng user mới với thông tin từ server
+        const updatedUser = {
+          ...currentInfo,
+          ...data,
+          id: data._id || data.id || currentInfo.id || currentInfo._id,
+          isMember: data.isMember // Đảm bảo isMember được cập nhật
+        };
+        
+        // Cập nhật State và LocalStorage ngay lập tức
+        setUserInfo(updatedUser);
+        localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+        
+        return data.isMember; 
+      }
+    } catch (error) {
+      console.error('Check status error in AuthContext:', error);
+    }
+    return null;
+  }, []); // Bỏ userInfo khỏi dependency để tránh làm reset interval ở component con
+
   // Memo hóa giá trị context
   const value = useMemo(() => ({
     email,
@@ -134,7 +179,8 @@ export const AuthProvider = ({ children }) => {
     role,
     register,
     setRole: setRoleExternal,
-  }), [email, isAuthenticated, login, logout, userInfo, role, register, setRoleExternal]);
+    checkStatus,
+  }), [email, isAuthenticated, login, logout, userInfo, role, register, setRoleExternal, checkStatus]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }; 

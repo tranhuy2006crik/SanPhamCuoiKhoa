@@ -67,7 +67,7 @@ const Hero = () => {
               </Button>
             </div>
           )}
-          {isAuthenticated && userInfo && userInfo.isMember !== true && (
+          {isAuthenticated && userInfo && userInfo.isMember === false && (
             <Button
               variant="primary"
               className="py-4 px-8 text-lg mt-6 bg-gradient-to-r from-red-600 to-red-400 hover:scale-105 transition-transform duration-150 font-bold shadow"

@@ -44,16 +44,15 @@ export const login = async (req, res) => {
         const token = jwt.sign(
             { id: user._id, role: user.role },
             process.env.JWT_SECRET || 'your_jwt_secret',
-            { expiresIn: '15m' } // Token ngắn hạn
+            { expiresIn: '15m' }
         );
 
         const refreshToken = jwt.sign(
             { id: user._id },
             process.env.JWT_REFRESH_SECRET || 'your_refresh_secret',
-            { expiresIn: '7d' } // Refresh token dài hạn
+            { expiresIn: '7d' }
         );
 
-        // Lưu refresh token vào DB
         user.refreshToken = refreshToken;
         await user.save();
 
@@ -105,5 +104,17 @@ export const refresh = async (req, res) => {
         res.status(200).json({ token: newToken });
     } catch (error) {
         res.status(403).json({ message: 'Refresh token hết hạn' });
+    }
+};
+
+export const getMe = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-const ListMovie = () => {
+const ListMovie = ({ onMovieClick }) => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
@@ -59,8 +59,9 @@ const ListMovie = () => {
         >
           {movies.map((movie, idx) => (
             <div
-              key={movie.title}
-              className="relative min-w-[180px] max-w-[200px] flex-shrink-0 group"
+              key={movie._id || movie.id || movie.title}
+              className="relative min-w-[180px] max-w-[200px] flex-shrink-0 group cursor-pointer"
+              onClick={() => onMovieClick && onMovieClick(movie)}
             >
               {/* Poster */}
               <div className="relative rounded-2xl overflow-hidden shadow-xl group-hover:scale-105 transition-transform duration-300">
@@ -68,6 +69,10 @@ const ListMovie = () => {
                   src={movie.image}
                   alt={movie.title}
                   className="w-full h-[260px] object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://via.placeholder.com/200x300/262626/cccccc?text=${encodeURIComponent(movie.title)}`;
+                  }}
                 />
                 {/* Overlay khi hover */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300" />

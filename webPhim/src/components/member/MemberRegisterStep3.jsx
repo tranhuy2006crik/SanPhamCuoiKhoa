@@ -83,9 +83,8 @@ const MemberRegisterStep3 = () => {
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-lg">Thẻ ghi nợ hoặc thẻ tín dụng</span>
                 <span className="flex gap-1 ml-2">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" className="h-6 w-10 object-contain" />
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Mastercard-logo.png" alt="Mastercard" className="h-6 w-10 object-contain" />
-                  
+                  <img src="/images/visa.png" alt="Visa" className="h-6 w-10 object-contain" />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="h-6 w-10 object-contain" />
                 </span>
               </div>
               {/* <span className="absolute right-4 top-4 text-yellow-500 text-xs flex items-center gap-1">
@@ -106,7 +105,7 @@ const MemberRegisterStep3 = () => {
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-lg">Ví điện tử</span>
                 <span className="flex gap-1 ml-2">
-                  <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="Momo" className="h-7 w-14 object-contain" />
+                  <img src="/images/momo.webp" alt="Momo" className="h-7 w-14 object-contain" />
                 </span>
               </div>
               <span className="absolute right-4 bottom-4 text-gray-400 group-hover:text-red-500 transition">

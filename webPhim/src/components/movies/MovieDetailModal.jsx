@@ -104,6 +104,11 @@ export default function MovieDetailModal({ open, movie, onClose }) {
             src={movie.image}
             alt={movie.title}
             className="w-full h-full object-cover object-center"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.target.onerror = null; 
+              e.target.src = 'https://via.placeholder.com/600x400?text=No+Poster';
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
         </div>

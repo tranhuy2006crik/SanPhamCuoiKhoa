@@ -7,11 +7,13 @@ import Features from './Features';
 import FAQ from './FAQ';
 import Footer from './Footer';
 import { AuthContext } from '../common/AuthContext';
+import MovieDetailModal from '../movies/MovieDetailModal';
 
 const HomePage = () => {
   const { isAuthenticated, userInfo, setUserInfo } = useContext(AuthContext);
   const [showModal, setShowModal] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated && userInfo && userInfo.email) {
@@ -24,9 +26,13 @@ const HomePage = () => {
     }
   }, [isAuthenticated, userInfo, setUserInfo]);
 
-  const handleRegisterMember = () => {
-    // Chuyển hướng sang trang đăng ký hội viên
-    window.location.href = '/register-member';
+  const handleMovieClick = (movie) => {
+    if (!isAuthenticated) {
+      alert('Vui lòng đăng nhập để xem thông tin phim!');
+      window.location.href = '/login';
+      return;
+    }
+    setSelectedMovie(movie);
   };
 
   return (
@@ -48,10 +54,18 @@ const HomePage = () => {
         </div>
       )}
       <Hero />
-      <ListMovie />
+      <ListMovie onMovieClick={handleMovieClick} />
       <Features />
       <FAQ />
       <Footer />
+
+      {/* Modal chi tiết phim */}
+      <MovieDetailModal
+        open={!!selectedMovie}
+        movie={selectedMovie}
+        onClose={() => setSelectedMovie(null)}
+      />
+
       {/* Modal hội viên */}
       {isAuthenticated && userInfo && userInfo.isMember === false && showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 backdrop-blur-sm">
@@ -67,7 +81,7 @@ const HomePage = () => {
             <p className="mb-6 text-gray-200">Bạn cần đăng ký gói hội viên để tiếp tục sử dụng đầy đủ các tính năng của trang web.</p>
             <button
               className="bg-gradient-to-r from-red-600 to-red-400 text-white px-5 py-2 rounded-lg shadow font-bold text-lg mb-2 w-full hover:scale-105 transition-transform duration-150"
-              onClick={handleRegisterMember}
+              onClick={() => window.location.href = '/register-member'}
             >
               Đăng ký hội viên ngay
             </button>
